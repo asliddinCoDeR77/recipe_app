@@ -1,6 +1,12 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:recipe_app/bloc/auth_bloc.dart';
+import 'package:recipe_app/bloc/auth_event.dart';
+import 'package:recipe_app/bloc/auth_state.dart';
+
 import 'package:recipe_app/ui/screens/auth/forget_password.dart';
+import 'package:recipe_app/ui/screens/auth/register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -50,7 +56,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     BounceInRight(
                       child: TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => const RegisterScreen(),
+                          ));
+                        },
                         child: const Text(
                           'Register',
                           style: TextStyle(
@@ -160,33 +170,59 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 40),
-                FadeInUp(
-                  delay: const Duration(milliseconds: 700),
-                  child: Center(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState?.validate() == true) {
-                          // Handle login action
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(350, 40),
-                        backgroundColor: const Color(0xff3FB4B1),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 50, vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
+                BlocConsumer<AuthBloc, AuthState>(
+                  listener: (context, state) {
+                    if (state is AuthSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(state.message)),
+                      );
+                      // Navigate to the home screen or another appropriate screen
+                    } else if (state is AuthFailure) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(state.error)),
+                      );
+                    }
+                  },
+                  builder: (context, state) {
+                    return FadeInUp(
+                      delay: const Duration(milliseconds: 700),
+                      child: Center(
+                        child: ElevatedButton(
+                          onPressed: state is! AuthLoading
+                              ? () {
+                                  if (_formKey.currentState?.validate() ==
+                                      true) {
+                                    context.read<AuthBloc>().add(LoginEvent(
+                                        _emailController.text,
+                                        _passwordController.text));
+                                  }
+                                }
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(350, 40),
+                            backgroundColor: const Color(0xff3FB4B1),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 50, vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          child: state is AuthLoading
+                              ? CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                )
+                              : const Text(
+                                  'Login',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.white,
+                                  ),
+                                ),
                         ),
                       ),
-                      child: const Text(
-                        'Login',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 40),
               ],

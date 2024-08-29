@@ -1,5 +1,3 @@
-// ignore_for_file: library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
 import 'package:recipe_app/ui/screens/splash/choose_auth_screen.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -11,13 +9,21 @@ class OnboardingScreen extends StatefulWidget {
   _OnboardingScreenState createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends State<OnboardingScreen>
+    with SingleTickerProviderStateMixin {
   final PageController _controller = PageController();
+  late AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+
     _controller.addListener(() {
+      setState(() {});
       if (_controller.page == 2) {
         Future.delayed(const Duration(seconds: 1), () {
           Navigator.of(context).pushReplacement(
@@ -31,33 +37,43 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   @override
+  void dispose() {
+    _animationController.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         alignment: Alignment.bottomCenter,
         children: [
-          PageView(
+          PageView.builder(
             controller: _controller,
-            children: [
-              buildOnboardingPage(
-                image: 'assets/images/on_1.png',
-                title: 'Share Your Recipes',
-                description:
-                    'Lorem ipsum dolor sit amet, consectetur elit, sed do eiusmod tempor incididunt ut.',
-              ),
-              buildOnboardingPage(
-                image: 'assets/images/on_2.png',
-                title: 'Learn to Cook',
-                description:
-                    'Lorem ipsum dolor sit amet, consectetur elit, sed do eiusmod tempor incididunt ut.',
-              ),
-              buildOnboardingPage(
-                image: 'assets/images/on_3.png',
-                title: 'Become a Master Chef',
-                description:
-                    'Lorem ipsum dolor sit amet, consectetur elit, sed do eiusmod tempor incididunt ut.',
-              ),
-            ],
+            itemCount: 3,
+            itemBuilder: (context, index) {
+              final double pageOffset =
+                  _controller.hasClients && _controller.position.haveDimensions
+                      ? _controller.page ?? 0
+                      : 0;
+              final double opacity =
+                  1 - (pageOffset - index).abs().clamp(0.0, 1.0);
+              return AnimatedOpacity(
+                opacity: opacity,
+                duration: const Duration(milliseconds: 500),
+                child: buildOnboardingPage(
+                  image: 'assets/images/on_${index + 1}.png',
+                  title: index == 0
+                      ? 'Share Your Recipes'
+                      : index == 1
+                          ? 'Learn to Cook'
+                          : 'Become a Master Chef',
+                  description:
+                      'Lorem ipsum dolor sit amet, consectetur elit, sed do eiusmod tempor incididunt ut.',
+                ),
+              );
+            },
           ),
           Positioned(
             bottom: 10.0,
@@ -84,8 +100,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Colors.black.withOpacity(0.5),
-              Colors.black.withOpacity(0.5),
+              Colors.black.withOpacity(0.3),
+              Colors.black.withOpacity(0.1),
             ],
             begin: Alignment.bottomCenter,
             end: Alignment.topCenter,

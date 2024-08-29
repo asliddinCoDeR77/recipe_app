@@ -10,14 +10,12 @@ class WelcomeScreen extends StatelessWidget {
       backgroundColor: const Color(0xff3FB4B1),
       body: Stack(
         children: [
-          // Full-screen background image
           Positioned.fill(
             child: Image.asset(
-              'assets/images/background.png', // Replace with your background image path
+              'assets/images/background.png',
               fit: BoxFit.cover,
             ),
           ),
-          // Foreground content
           Center(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -40,9 +38,7 @@ class WelcomeScreen extends StatelessWidget {
                   const SizedBox(height: 300),
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context) => OnboardingScreen(),
-                      ));
+                      Navigator.of(context).push(_createRoute());
                     },
                     style: ElevatedButton.styleFrom(
                       foregroundColor: Colors.black,
@@ -64,6 +60,24 @@ class WelcomeScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Route _createRoute() {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) =>
+          OnboardingScreen(),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = 0.0;
+        const end = 1.0;
+        final tween = Tween(begin: begin, end: end);
+        final fadeAnimation = animation.drive(tween);
+
+        return FadeTransition(
+          opacity: fadeAnimation,
+          child: child,
+        );
+      },
     );
   }
 }
