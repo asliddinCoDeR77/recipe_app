@@ -27,7 +27,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final token = response.data['token'] ?? '';
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', token);
-      await prefs.setString('name', event.name ?? '');
+      await prefs.setString('name', event.name);
 
       emit(AuthSuccess(response.data['message'] ?? 'Registration successful'));
     } catch (e) {
