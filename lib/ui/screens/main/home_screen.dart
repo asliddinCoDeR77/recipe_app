@@ -1,152 +1,214 @@
 import 'package:flutter/material.dart';
-import 'package:gap/gap.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:recipe_app/logic/blocs/auth/auth_bloc.dart';
+import 'package:recipe_app/logic/blocs/auth/auth_state.dart';
+import 'package:recipe_app/logic/services/auth_service.dart';
 import 'package:recipe_app/ui/screens/auth/login_screen.dart';
-import 'package:recipe_app/ui/screens/main/edit_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:recipe_app/ui/screens/main/edit.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  String? fullName;
-  String? location = 'San Francisco, CA';
+class _ProfileScreenState extends State<ProfileScreen> {
+  final authService = AuthService();
+  String? username;
+  String? photo;
+
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _fetchUserData();
   }
 
-  Future<void> _loadUserData() async {
-    final prefs = await SharedPreferences.getInstance();
+  Future<void> _fetchUserData() async {
+    final data = await authService.getCurrentUser();
+
     setState(() {
-      fullName = prefs.getString('full_name');
+      username = data['data']['name'];
+      photo = data['data']['photo'];
     });
-  }
-
-  Future<void> _logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('token');
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => LoginScreen()),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text('Home'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.settings),
-            onPressed: () {
-              Navigator.of(context)
-                  .push(
-                MaterialPageRoute(
-                  builder: (context) => EditNameScreen(),
-                ),
-              )
-                  .then((_) {
-                _loadUserData();
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthUnauthenticated) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => LoginScreen()),
+          );
+        } else if (state is AuthLoading) {
+          showDialog(
+              context: context,
+              builder: (ctx) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
               });
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: _logout,
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                Container(
-                  height: 240,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/images/back_2.png'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 50,
-                  left: 20,
-                  child: CircleAvatar(
-                    radius: 50,
-                    backgroundImage: NetworkImage(
-                        'https://avatars.githubusercontent.com/u/8855632?v=4'),
-                  ),
-                ),
-                Positioned(
-                  top: 150,
-                  left: 20,
-                  child: Text(
-                    fullName ?? 'User',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 180,
-                  left: 20,
-                  child: Text(
-                    location ?? '',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        }
+      },
+      child: Scaffold(
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              Stack(
                 children: [
-                  Text(
-                    'Welcome, $fullName!',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  Container(
+                    height: 200,
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: NetworkImage(
+                          'https://your-background-image-url.com', // Replace with actual background image URL
+                        ),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   ),
-                  SizedBox(height: 20),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
+                  Positioned(
+                    top: 40,
+                    left: 16,
+                    right: 16,
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildCategoryButton(
-                            'Food Recipes', Icons.restaurant_menu),
-                        Gap(20),
-                        _buildCategoryButton('Cookbook', Icons.book),
-                        Gap(20),
-                        _buildCategoryButton('Live', Icons.live_tv),
+                        IconButton(
+                          icon: Icon(Icons.arrow_back, color: Colors.white),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.edit, color: Colors.white),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (ctx) => EditProfileScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.settings, color: Colors.white),
+                              onPressed: () {
+                                // Navigate to settings or other screen
+                              },
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                  SizedBox(height: 20),
-                  Text(
-                    'Recent Activity',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                  Positioned(
+                    bottom: -60,
+                    left: MediaQuery.of(context).size.width / 2 - 60,
+                    child: CircleAvatar(
+                      radius: 60,
+                      backgroundImage: NetworkImage(
+                        photo == null
+                            ? "https://i.pinimg.com/originals/62/bc/41/62bc418b4e75637360ad6d0a22bd2465.png"
+                            : 'http://recipe.flutterwithakmaljon.uz/storage/avatars/$photo',
+                      ),
+                      onBackgroundImageError: (error, stackTrace) {
+                        // Error handling for loading image
+                        return null;
+                      },
                     ),
                   ),
-                  SizedBox(height: 10),
-                  _buildRecentActivityCard(),
                 ],
+              ),
+              SizedBox(height: 70),
+              Text(
+                username ?? 'Loading...',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                "San Francisco, CA",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
+              ),
+              SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildStatColumn('23', 'Recipes'),
+                  _buildStatColumn('431', 'Following'),
+                  _buildStatColumn('1.4k', 'Followers'),
+                ],
+              ),
+              SizedBox(height: 16),
+              _buildCategoryTabs(),
+              SizedBox(height: 16),
+              _buildRecipeGrid(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatColumn(String number, String label) {
+    return Column(
+      children: [
+        Text(
+          number,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.grey,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoryTabs() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _buildCategoryTab('Food Recipes', Icons.restaurant_menu, true),
+          _buildCategoryTab('Cookbook', Icons.book, false),
+          _buildCategoryTab('Live', Icons.videocam, false),
+          // Add more tabs if needed
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryTab(String title, IconData icon, bool isSelected) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.teal : Colors.teal[50],
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: isSelected ? Colors.white : Colors.teal),
+            SizedBox(width: 4),
+            Text(
+              title,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.teal,
               ),
             ),
           ],
@@ -155,28 +217,61 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCategoryButton(String text, IconData icon) {
-    return ElevatedButton.icon(
-      onPressed: () {},
-      icon: Icon(icon, color: Colors.teal),
-      label: Text(text),
-      style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.teal,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: Colors.teal),
-        ),
-      ),
+  Widget _buildRecipeGrid() {
+    return GridView.count(
+      crossAxisCount: 2,
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      children: [
+        _buildRecipeCard(
+            'Grilled meat and veggies',
+            'https://www.cnet.com/a/img/resize/69256d2623afcbaa911f08edc45fb2d3f6a8e172/hub/2023/02/03/afedd3ee-671d-4189-bf39-4f312248fb27/gettyimages-1042132904.jpg?auto=webp&fit=crop&height=675&width=1200',
+            '31 min'),
+        _buildRecipeCard(
+            'Grilled meat and veggies',
+            'https://www.cnet.com/a/img/resize/69256d2623afcbaa911f08edc45fb2d3f6a8e172/hub/2023/02/03/afedd3ee-671d-4189-bf39-4f312248fb27/gettyimages-1042132904.jpg?auto=webp&fit=crop&height=675&width=1200',
+            '31 min'),
+      ],
     );
   }
 
-  Widget _buildRecentActivityCard() {
-    return Card(
-      child: ListTile(
-        title: Text('Devilled whitebait and calamari'),
-        subtitle: Text('by Amelia Melanes'),
+  Widget _buildRecipeCard(String title, String imageUrl, String time) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        image: DecorationImage(
+          image: NetworkImage(imageUrl),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            bottom: 16,
+            left: 8,
+            child: Text(
+              title,
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                backgroundColor: Colors.black54,
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 8,
+            left: 8,
+            child: Text(
+              time,
+              style: TextStyle(
+                color: Colors.white,
+                backgroundColor: Colors.black54,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
