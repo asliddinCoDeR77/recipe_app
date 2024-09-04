@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
+import 'package:recipe_app/core/gen/assets.gen.dart';
 import 'package:recipe_app/logic/blocs/auth/auth_bloc.dart';
 import 'package:recipe_app/logic/blocs/auth/auth_event.dart';
 import 'package:recipe_app/logic/blocs/auth/auth_state.dart';
@@ -50,12 +51,7 @@ class _WelcomePageState extends State<WelcomePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Gap(240),
-                Image.asset(
-                  'assets/images/logo.png',
-                  color: Colors.white,
-                  width: 234,
-                  height: 234,
-                ),
+                Assets.images.logo.image(),
                 Text(
                   'Meals On\n Demand',
                   style: TextStyle(
