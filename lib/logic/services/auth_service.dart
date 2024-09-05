@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive/hive.dart';
 
 class AuthService {
   final Dio _dio = Dio(); // Initialize Dio directly
@@ -28,10 +28,8 @@ class AuthService {
       };
       final response = await _dio.post(url, data: data);
       if (response.statusCode == 200) {
-        SharedPreferences sharedPreferences =
-            await SharedPreferences.getInstance();
-        await sharedPreferences.setString(
-            'userToken', response.data['data']['token']);
+        var box = Hive.box('authBox');
+        await box.put('userToken', response.data['data']['token']);
       }
       return response.data;
     } on DioException catch (e) {
@@ -53,10 +51,8 @@ class AuthService {
       };
       final response = await _dio.post(url, data: data);
       if (response.statusCode == 200) {
-        SharedPreferences sharedPreferences =
-            await SharedPreferences.getInstance();
-        await sharedPreferences.setString(
-            'userToken', response.data['data']['token']);
+        var box = Hive.box('authBox');
+        await box.put('userToken', response.data['data']['token']);
         return response.data;
       }
     } on DioException catch (e) {
@@ -68,9 +64,8 @@ class AuthService {
 
   Future<bool> isLoggedIn() async {
     try {
-      SharedPreferences sharedPreferences =
-          await SharedPreferences.getInstance();
-      String? userData = sharedPreferences.getString('userToken');
+      var box = Hive.box('authBox');
+      String? userData = box.get('userToken');
       return userData != null;
     } catch (e) {
       return false;
@@ -79,9 +74,8 @@ class AuthService {
 
   Future<void> logout() async {
     try {
-      SharedPreferences sharedPreferences =
-          await SharedPreferences.getInstance();
-      await sharedPreferences.remove('userToken');
+      var box = Hive.box('authBox');
+      await box.delete('userToken');
     } catch (e) {
       throw Exception('Logout failed: $e');
     }
@@ -89,9 +83,8 @@ class AuthService {
 
   Future<Map<String, dynamic>> getCurrentUser() async {
     try {
-      SharedPreferences sharedPreferences =
-          await SharedPreferences.getInstance();
-      String? userData = sharedPreferences.getString('userToken');
+      var box = Hive.box('authBox');
+      String? userData = box.get('userToken');
       const url = '/user';
       final response = await _dio.get(
         url,
@@ -113,9 +106,8 @@ class AuthService {
     File? photo, // Optional: If you want to update the profile picture
   }) async {
     try {
-      SharedPreferences sharedPreferences =
-          await SharedPreferences.getInstance();
-      String? userToken = sharedPreferences.getString('userToken');
+      var box = Hive.box('authBox');
+      String? userToken = box.get('userToken');
 
       print(userToken);
       // Create FormData to send in the request
